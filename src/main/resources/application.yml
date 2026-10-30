@@ -1,0 +1,9 @@
+spring:
+  application:
+    name: vox-intelligence-api
+
+server:
+  port: 8080
+
+  error:
+    include-message: always
