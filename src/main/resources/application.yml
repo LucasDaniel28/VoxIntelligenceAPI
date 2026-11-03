@@ -3,6 +3,7 @@ spring:
     name: vox-intelligence-api
   ai:
     openai:
+      # Key temporária para testes: configure OPENAI_API_KEY no ambiente local.
       api-key: ${OPENAI_API_KEY:}
       chat:
         options:
