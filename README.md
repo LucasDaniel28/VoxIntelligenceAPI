@@ -1,21 +1,23 @@
 # VoxIntelligenceAPI
 
-API REST para registrar e organizar movimentações financeiras descritas em linguagem natural. A proposta é reduzir o preenchimento manual: o usuário informa uma movimentação em uma frase e a aplicação identifica os principais dados para preparar o registro.
+API REST para registrar movimentações financeiras a partir de descrições em texto ou gravações de áudio. O objetivo é reduzir o preenchimento manual: o usuário informa uma despesa ou receita em linguagem natural e a aplicação prepara os dados para conferência.
 
-## Objetivo
+## Funcionalidades disponíveis
 
-Receber descrições como:
-
-> Gastei 50 reais no Starbucks agora.
-
-E retornar uma estrutura com tipo da movimentação, valor, moeda, estabelecimento, categoria, subcategoria, data e situação da interpretação.
+- Recebimento de descrições financeiras por JSON.
+- Interpretação de tipo, valor, moeda, estabelecimento, categoria, subcategoria e data.
+- Transcrição de arquivos de áudio.
+- Encaminhamento automático da transcrição para interpretação financeira.
+- Identificação de informações obrigatórias ausentes.
+- Preparação da movimentação para confirmação antes do registro.
 
 ## Tecnologias
 
 - Java 21
-- Spring Boot 3.5
+- Spring Boot 3.5.11
 - Spring Web
-- Bean Validation
+- Spring Validation
+- Spring AI 1.1.4
 - Maven
 - JUnit 5
 
@@ -23,6 +25,27 @@ E retornar uma estrutura com tipo da movimentação, valor, moeda, estabelecimen
 
 - JDK 21
 - Maven 3.9 ou superior
+- Chave de acesso do provedor configurado para processamento de texto e transcrição de áudio
+
+## Configuração
+
+A chave de acesso não deve ser inserida diretamente nos arquivos do projeto.
+
+Configure a variável de ambiente `OPENAI_API_KEY`.
+
+No Windows PowerShell:
+
+```powershell
+$env:OPENAI_API_KEY="sua-chave"
+```
+
+No Linux ou macOS:
+
+```bash
+export OPENAI_API_KEY="sua-chave"
+```
+
+O modelo de texto e o serviço de transcrição estão configurados em `src/main/resources/application.yml`. Os nomes dos modelos podem ser alterados nessa configuração.
 
 ## Executar localmente
 
@@ -47,9 +70,9 @@ mvn spring-boot:run
 
 A aplicação ficará disponível em `http://localhost:8080`.
 
-## Endpoint disponível
+## Endpoints
 
-### Interpretar movimentação
+### 1. Interpretar uma movimentação por texto
 
 `POST /api/v1/transactions/interpret`
 
@@ -69,25 +92,43 @@ Exemplo de resposta:
   "type": "EXPENSE",
   "amount": 50.00,
   "currency": "BRL",
-  "description": "Compra em Starbucks",
+  "description": "Compra no Starbucks",
   "location": "Starbucks",
   "category": "FOOD",
   "subcategory": "COFFEE",
-  "date": "2026-10-30",
+  "date": "2026-11-03",
   "status": "READY_FOR_CONFIRMATION",
   "missingFields": []
 }
 ```
 
-Quando informações obrigatórias não forem identificadas, a resposta utiliza o status `NEEDS_INFORMATION` e informa os campos ausentes em `missingFields`.
+### 2. Interpretar uma movimentação por áudio
+
+`POST /api/v1/transactions/interpret-audio`
+
+Envie uma requisição `multipart/form-data` com o campo `file`.
+
+Formatos aceitos:
+
+- MP3
+- MP4
+- MPEG
+- MPGA
+- M4A
+- WAV
+- WEBM
+- FLAC
+
+Tamanho máximo: 25 MB.
 
 Exemplo com cURL:
 
 ```bash
-curl -X POST http://localhost:8080/api/v1/transactions/interpret \
-  -H "Content-Type: application/json" \
-  -d '{"text":"Gastei 50 reais no Starbucks agora"}'
+curl -X POST http://localhost:8080/api/v1/transactions/interpret-audio \\
+  -F "file=@./gasto.wav"
 ```
+
+O áudio é transcrito e o texto resultante passa pelo mesmo fluxo de interpretação utilizado pelo endpoint de texto.
 
 ## Categorias iniciais
 
@@ -103,20 +144,28 @@ curl -X POST http://localhost:8080/api/v1/transactions/interpret \
 - `INVESTMENTS`
 - `OTHER`
 
+## Situação da interpretação
+
+- `READY_FOR_CONFIRMATION`: tipo e valor foram identificados; a movimentação está preparada para conferência.
+- `NEEDS_INFORMATION`: faltam dados obrigatórios, informados em `missingFields`.
+
+A aplicação não grava automaticamente uma movimentação nesta etapa. A confirmação e a persistência serão implementadas nas próximas entregas.
+
 ## Roadmap
 
 - [x] Estrutura inicial com Spring Boot.
 - [x] Endpoint para receber descrições em texto.
-- [x] Extração inicial de valor, local e data.
-- [x] Classificação inicial de tipo e categoria.
-- [x] Retorno de dados estruturados.
-- [ ] Aprimorar interpretação de linguagem natural.
-- [ ] Persistir movimentações em banco de dados.
+- [x] Integração com o serviço de interpretação de linguagem.
+- [x] Extração estruturada dos dados financeiros.
+- [x] Integração com transcrição de áudio.
+- [x] Endpoint para receber gravações e encaminhar o texto transcrito.
+- [ ] Implementar ferramentas para registrar e consultar movimentações.
+- [ ] Persistir movimentações em PostgreSQL.
 - [ ] Implementar confirmação e edição de movimentações.
-- [ ] Receber arquivos de áudio e realizar transcrição.
-- [ ] Adicionar interação por voz.
-- [ ] Criar consultas e relatórios de orçamento.
+- [ ] Criar limites e metas orçamentárias.
+- [ ] Implementar consultas e relatórios de orçamento.
+- [ ] Adicionar respostas em áudio.
 
 ## Status
 
-Projeto em desenvolvimento. A versão atual realiza uma interpretação inicial baseada em regras e ainda não persiste movimentações financeiras.
+Projeto em desenvolvimento. Nesta etapa, a API interpreta descrições textuais e gravações de áudio, retornando dados estruturados para conferência. A persistência financeira ainda não está habilitada.
