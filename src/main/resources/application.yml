@@ -14,6 +14,12 @@ spring:
           model: whisper-1
           language: pt
           response-format: text
+        speech:
+          options:
+            model: gpt-4o-mini-tts
+            voice: nova
+            response-format: mp3
+            speed: 1.0
 
   datasource:
     url: ${DB_URL:jdbc:postgresql://localhost:5432/vox}
