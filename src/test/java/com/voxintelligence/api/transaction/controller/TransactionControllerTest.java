@@ -56,6 +56,7 @@ class TransactionControllerTest {
     @Test
     void shouldRejectBlankText() throws Exception {
         mockMvc.perform(post("/api/v1/transactions/interpret")
+                        .header("X-API-KEY", "test-api-key")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"text":"   "}
