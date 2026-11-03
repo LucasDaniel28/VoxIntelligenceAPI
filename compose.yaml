@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: vox-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: vox
+      POSTGRES_USER: vox
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-vox}
+    ports:
+      - "5432:5432"
+    volumes:
+      - vox_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U vox -d vox"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  vox_postgres_data:
