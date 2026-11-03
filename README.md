@@ -18,7 +18,7 @@ API REST para registrar movimentações financeiras a partir de descrições em 
 - Spring Boot 3.5.11
 - Spring Web
 - Spring Validation
-- Spring AI (ChatClient, Tool Calling, transcrição e síntese de áudio)
+- Serviços externos de processamento de texto, transcrição e síntese de áudio
 - Maven
 - Spring Data JPA
 - PostgreSQL 16
@@ -30,13 +30,13 @@ API REST para registrar movimentações financeiras a partir de descrições em 
 
 - JDK 21
 - Maven 3.9 ou superior
-- Chave de acesso do provedor configurado para processamento de texto e transcrição de áudio
+- Credencial do serviço externo configurado para processamento de texto e áudio
 
 ## Configuração
 
 A chave de acesso não deve ser inserida diretamente nos arquivos do projeto.
 
-Configure as variáveis `OPENAI_API_KEY` e `API_ACCESS_KEY`. A primeira é usada pelo provedor de processamento de linguagem e áudio; a segunda é uma chave privada definida por você para proteger todos os endpoints HTTP da aplicação. Não reutilize a chave do provedor como chave de acesso da API.
+Configure as variáveis `OPENAI_API_KEY` e `API_ACCESS_KEY`. A variável `OPENAI_API_KEY` contém a credencial do serviço externo utilizado nos recursos de texto e áudio. A variável `API_ACCESS_KEY` é uma chave privada definida por você para proteger todos os endpoints HTTP da aplicação. Não reutilize a chave do provedor como chave de acesso da API.
 
 O arquivo `.env.example` apresenta os nomes das variáveis, sem conter credenciais. Se preferir usar um arquivo `.env`, utilize uma ferramenta de carregamento de variáveis compatível; o Spring Boot não carrega esse arquivo automaticamente por padrão.
 
@@ -56,7 +56,7 @@ export API_ACCESS_KEY="crie-uma-chave-longa-e-aleatoria"
 
 Todas as requisições à API devem enviar o cabeçalho `X-API-KEY` com o valor de `API_ACCESS_KEY`. Sem a variável configurada, a aplicação responde `503 Service Unavailable`; com uma chave ausente ou incorreta, responde `401 Unauthorized`. Os testes unitários validam esses cenários. Não publique a chave no GitHub, em capturas de tela ou no código-fonte.
 
-O modelo de texto e o serviço de transcrição estão configurados em `src/main/resources/application.yml`. Os nomes dos modelos podem ser alterados nessa configuração.
+Os serviços e parâmetros de processamento de texto, transcrição e síntese de áudio estão configurados em `src/main/resources/application.yml`.
 
 ## Executar localmente
 
@@ -73,7 +73,7 @@ Execute os testes:
 mvn clean verify
 ```
 
-Os testes automatizados utilizam mocks para não realizar chamadas pagas ao provedor externo. O PostgreSQL é necessário para executar a aplicação completa.
+Os testes unitários utilizam mocks para não realizar chamadas externas. A suíte também executa testes de integração com PostgreSQL 16 em contêiner, validando as três migrações Flyway, a compatibilidade do esquema com as entidades JPA e operações reais de persistência. O Docker deve estar disponível para executar esses testes.
 
 Inicie o PostgreSQL com Docker Compose (em outro terminal):
 
@@ -270,7 +270,7 @@ Requisição:
 }
 ```
 
-A resposta é um arquivo MP3 (`audio/mpeg`). A síntese utiliza o modelo e a voz configurados em `application.yml` e gera consumo adicional no provedor.
+A resposta é um arquivo MP3 (`audio/mpeg`). A síntese utiliza o serviço e a voz configurados em `application.yml`.
 
 ## Categorias iniciais
 
@@ -297,9 +297,9 @@ A interpretação não grava automaticamente. Após revisar os dados extraídos,
 
 - [x] Estrutura inicial com Spring Boot.
 - [x] Endpoint para receber descrições em texto.
-- [x] Integração com o serviço de interpretação de linguagem.
+- [x] Integração com serviço externo de interpretação de linguagem.
 - [x] Extração estruturada dos dados financeiros.
-- [x] Integração com transcrição de áudio.
+- [x] Integração com serviço externo de transcrição de áudio.
 - [x] Endpoint para receber gravações e encaminhar o texto transcrito.
 - [x] Testes automatizados para validação de áudio e endpoints REST.
 - [x] Implementar ferramentas para registrar e consultar movimentações e calcular o saldo.
