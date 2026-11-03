@@ -58,7 +58,8 @@ public class BudgetService {
     private BudgetSummaryResponse summarize(MonthlyBudget budget) {
         LocalDate start=LocalDate.of(budget.getYear(), budget.getMonth(), 1);
         LocalDate end=start.withDayOfMonth(start.lengthOfMonth());
-        BigDecimal spent=transactions.sumByTypeAndPeriod(TransactionType.EXPENSE, start, end);
+        BigDecimal spent=transactions.sumByTypeCategoryAndPeriod(
+                TransactionType.EXPENSE, budget.getCategory(), start, end);
         BigDecimal remaining=budget.getLimitAmount().subtract(spent);
         BigDecimal percentage=spent.multiply(BigDecimal.valueOf(100))
                 .divide(budget.getLimitAmount(), 2, RoundingMode.HALF_UP);
