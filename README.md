@@ -17,7 +17,6 @@ API REST para registrar movimentações financeiras a partir de descrições em 
 - Spring Boot 3.5.11
 - Spring Web
 - Spring Validation
-- Spring AI 1.1.4
 - Maven
 - JUnit 5
 
