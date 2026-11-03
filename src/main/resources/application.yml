@@ -15,6 +15,20 @@ spring:
           language: pt
           response-format: text
 
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/vox}
+    username: ${DB_USERNAME:vox}
+    password: ${DB_PASSWORD:vox}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+  flyway:
+    enabled: true
   servlet:
     multipart:
       max-file-size: 25MB
