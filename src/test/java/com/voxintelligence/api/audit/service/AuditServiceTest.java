@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.voxintelligence.api.audit.model.AuditEvent;
 import com.voxintelligence.api.audit.repository.AuditEventRepository;
+import com.voxintelligence.api.budget.model.MonthlyBudget;
 import com.voxintelligence.api.transaction.model.FinancialTransaction;
 import com.voxintelligence.api.transaction.model.TransactionCategory;
 import com.voxintelligence.api.transaction.model.TransactionType;
@@ -54,7 +55,7 @@ class AuditServiceTest {
     }
 
     @Test
-    void shouldRecordDeletionWithBeforeSnapshot() throws Exception {
+    void shouldRecordDeletionWithBeforeSnapshot() {
         FinancialTransaction transaction = transaction(new BigDecimal("45.90"), "Almoço");
 
         service.recordTransactionDeleted(transaction);
@@ -65,10 +66,9 @@ class AuditServiceTest {
         assertNull(event.getAfterData());
     }
 
-
     @Test
     void shouldRecordBudgetCreationSnapshot() throws Exception {
-        var budget = budget(new BigDecimal("800.00"));
+        MonthlyBudget budget = budget(new BigDecimal("800.00"));
         service.recordBudgetCreated(budget);
 
         AuditEvent event = capturedEvent();
@@ -83,8 +83,9 @@ class AuditServiceTest {
 
     @Test
     void shouldRecordBudgetUpdateSnapshots() throws Exception {
-        var before = budget(new BigDecimal("800.00"));
-        var after = budgetWithId(before.getId(), new BigDecimal("950.00"));
+        MonthlyBudget before = budget(new BigDecimal("800.00"));
+        MonthlyBudget after = budgetWithId(before.getId(), new BigDecimal("950.00"));
+
         service.recordBudgetUpdated(before, after);
 
         AuditEvent event = capturedEvent();
@@ -94,19 +95,25 @@ class AuditServiceTest {
     }
 
     @Test
-    void shouldRecordBudgetDeletionSnapshot() {
-        var budget = budget(new BigDecimal("800.00"));
+    void shouldRecordBudgetDeletionSnapshot() throws Exception {
+        MonthlyBudget budget = budget(new BigDecimal("800.00"));
         service.recordBudgetDeleted(budget);
 
         AuditEvent event = capturedEvent();
         assertEquals("MONTHLY_BUDGET", event.getEntityType());
+        assertEquals(budget.getId(), event.getEntityId());
         assertEquals("DELETE", event.getAction());
-        assertNotNull(event.getBeforeData());
+        JsonNode before = objectMapper.readTree(event.getBeforeData());
+        assertAmountEquals("800.00", before, "limitAmount");
         assertNull(event.getAfterData());
     }
 
     private void assertAmountEquals(String expected, JsonNode snapshot) {
-        assertEquals(0, new BigDecimal(expected).compareTo(snapshot.get("amount").decimalValue()));
+        assertAmountEquals(expected, snapshot, "amount");
+    }
+
+    private void assertAmountEquals(String expected, JsonNode snapshot, String field) {
+        assertEquals(0, new BigDecimal(expected).compareTo(snapshot.get(field).decimalValue()));
     }
 
     private AuditEvent capturedEvent() {
@@ -123,5 +130,13 @@ class AuditServiceTest {
         return new FinancialTransaction(id, TransactionType.EXPENSE, amount, "BRL",
                 description, "Restaurante", TransactionCategory.FOOD, "RESTAURANT",
                 LocalDate.of(2026, 11, 3));
+    }
+
+    private MonthlyBudget budget(BigDecimal limitAmount) {
+        return budgetWithId(UUID.randomUUID(), limitAmount);
+    }
+
+    private MonthlyBudget budgetWithId(UUID id, BigDecimal limitAmount) {
+        return new MonthlyBudget(id, TransactionCategory.FOOD, 2026, 11, limitAmount);
     }
 }
