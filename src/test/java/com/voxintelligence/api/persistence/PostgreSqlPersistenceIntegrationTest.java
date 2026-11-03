@@ -80,14 +80,14 @@ class PostgreSqlPersistenceIntegrationTest {
                 "Almoço", "Restaurante", TransactionCategory.FOOD, "RESTAURANT",
                 LocalDate.of(2026, 11, 3));
 
-        transactionRepository.saveAndFlush(transaction);
+        FinancialTransaction saved = transactionRepository.saveAndFlush(transaction);
 
         assertThat(transactionRepository.findById(transaction.getId())).isPresent();
         assertThat(transactionRepository.sumByTypeAndPeriod(
                 TransactionType.EXPENSE, LocalDate.of(2026, 11, 1),
                 LocalDate.of(2026, 11, 30))).isEqualByComparingTo("42.50");
-        assertThat(transaction.getCreatedAt()).isNotNull();
-        assertThat(transaction.getUpdatedAt()).isNotNull();
+        assertThat(saved.getCreatedAt()).isNotNull();
+        assertThat(saved.getUpdatedAt()).isNotNull();
     }
 
     @Test
