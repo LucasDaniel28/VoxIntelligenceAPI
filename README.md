@@ -19,6 +19,10 @@ API REST para registrar movimentações financeiras a partir de descrições em 
 - Spring Web
 - Spring Validation
 - Maven
+- Spring Data JPA
+- PostgreSQL 16
+- Flyway (migrações de banco)
+- Docker Compose
 - JUnit 5
 
 ## Requisitos
@@ -62,13 +66,27 @@ Execute os testes:
 mvn clean verify
 ```
 
-Os testes automatizados cobrem a validação de arquivos de áudio e os endpoints HTTP de interpretação por texto e áudio. Eles utilizam dublês para não realizar chamadas pagas ao provedor externo.
+Os testes automatizados utilizam mocks para não realizar chamadas pagas ao provedor externo. O PostgreSQL é necessário para executar a aplicação completa.
 
-Inicie a aplicação:
+Inicie o PostgreSQL com Docker Compose (em outro terminal):
+
+```bash
+docker compose up -d postgres
+```
+
+Aguarde o container ficar saudável. O Flyway cria as tabelas automaticamente na primeira inicialização. Depois inicie a API:
 
 ```bash
 mvn spring-boot:run
 ```
+
+Para encerrar o banco:
+
+```bash
+docker compose down
+```
+
+Os dados permanecem no volume `vox_postgres_data`. Para apagar também os dados locais, use `docker compose down -v`.
 
 A aplicação ficará disponível em `http://localhost:8080`.
 
@@ -132,7 +150,55 @@ curl -X POST http://localhost:8080/api/v1/transactions/interpret-audio \\
 
 O áudio é transcrito e o texto resultante passa pelo mesmo fluxo de interpretação utilizado pelo endpoint de texto.
 
-### 3. Conversar com o assistente financeiro
+### 3. Gerenciar movimentações financeiras
+
+A API oferece operações REST para criar, consultar, editar e excluir movimentações:
+
+| Método | Rota | Descrição |
+|---|---|---|
+| `POST` | `/api/v1/transactions` | Cria uma movimentação confirmada |
+| `GET` | `/api/v1/transactions` | Lista movimentações |
+| `GET` | `/api/v1/transactions/{id}` | Consulta uma movimentação |
+| `PUT` | `/api/v1/transactions/{id}` | Atualiza uma movimentação |
+| `DELETE` | `/api/v1/transactions/{id}` | Exclui uma movimentação |
+
+Exemplo de criação:
+
+```json
+{
+  "type": "EXPENSE",
+  "amount": 42.50,
+  "description": "Almoço",
+  "location": "Restaurante",
+  "category": "FOOD",
+  "subcategory": "RESTAURANT",
+  "date": "2026-11-03"
+}
+```
+
+### 4. Gerenciar limites e orçamentos
+
+| Método | Rota | Descrição |
+|---|---|---|
+| `POST` | `/api/v1/budgets` | Cria limite mensal por categoria |
+| `GET` | `/api/v1/budgets?year=2026&month=11` | Consulta limites e consumo do mês |
+| `PUT` | `/api/v1/budgets/{id}` | Atualiza o valor do limite |
+| `DELETE` | `/api/v1/budgets/{id}` | Exclui o limite |
+
+Exemplo de criação:
+
+```json
+{
+  "category": "FOOD",
+  "year": 2026,
+  "month": 11,
+  "limitAmount": 800.00
+}
+```
+
+O resumo informa o total gasto naquela categoria no mês, o valor restante, o percentual utilizado e se o limite foi ultrapassado.
+
+### 5. Conversar com o assistente financeiro
 
 `POST /api/v1/assistant/message`
 
@@ -149,10 +215,12 @@ O assistente pode acionar ferramentas para:
 - Registrar uma receita ou despesa quando houver pedido explícito e os dados estiverem claros.
 - Listar movimentações, opcionalmente filtrando por receita ou despesa.
 - Calcular o total de receitas, despesas e o saldo líquido.
+- Criar limites mensais por categoria mediante solicitação explícita.
+- Consultar o consumo e o percentual utilizado dos limites.
 
 Exemplo de consulta: `Qual é meu saldo atual?`.
 
-**Importante:** nesta etapa, as movimentações são mantidas somente em memória. Elas são perdidas quando a aplicação é reiniciada e não devem ser consideradas armazenamento financeiro permanente. A persistência em PostgreSQL será implementada em uma etapa posterior.
+As movimentações e os limites são persistidos no PostgreSQL. As alterações de esquema são controladas pelo Flyway.
 
 ## Categorias iniciais
 
@@ -185,12 +253,13 @@ A aplicação não grava automaticamente uma movimentação nesta etapa. A confi
 - [x] Endpoint para receber gravações e encaminhar o texto transcrito.
 - [x] Testes automatizados para validação de áudio e endpoints REST.
 - [x] Implementar ferramentas para registrar e consultar movimentações e calcular o saldo.
-- [ ] Persistir movimentações em PostgreSQL.
-- [ ] Implementar confirmação e edição de movimentações.
-- [ ] Criar limites e metas orçamentárias.
-- [ ] Implementar consultas e relatórios de orçamento.
+- [x] Persistir movimentações em PostgreSQL com Flyway.
+- [x] Disponibilizar operações REST de criação, consulta, edição e exclusão.
+- [x] Criar limites mensais por categoria.
+- [x] Calcular consumo, saldo restante e percentual do orçamento.
+- [x] Integrar ferramentas de orçamento ao assistente.
 - [ ] Adicionar respostas em áudio.
 
 ## Status
 
-Projeto em desenvolvimento. Nesta etapa, a API interpreta descrições textuais e gravações de áudio, além de disponibilizar ferramentas conversacionais para registrar e consultar movimentações em memória. A persistência permanente ainda não está habilitada.
+Projeto em desenvolvimento. A API interpreta texto e áudio, disponibiliza gerenciamento REST de movimentações, persiste dados em PostgreSQL e oferece ferramentas conversacionais para lançamentos, saldo e orçamento. O projeto ainda não possui autenticação multiusuário; a implantação atual deve ser tratada como ambiente de desenvolvimento/uso individual, não como serviço financeiro público.
