@@ -1,9 +1,26 @@
 spring:
   application:
     name: vox-intelligence-api
+  ai:
+    openai:
+      api-key: ${OPENAI_API_KEY:}
+      chat:
+        options:
+          model: gpt-4o-mini
+          temperature: 0.1
+      audio:
+        transcription:
+          model: whisper-1
+          language: pt
+          response-format: text
+
+  servlet:
+    multipart:
+      max-file-size: 25MB
+      max-request-size: 26MB
 
 server:
   port: 8080
 
-  error:
-    include-message: always
+app:
+  time-zone: America/Sao_Paulo
