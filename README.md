@@ -30,7 +30,7 @@ API REST para registrar movimentações financeiras a partir de descrições em 
 
 A chave de acesso não deve ser inserida diretamente nos arquivos do projeto.
 
-Configure a variável de ambiente `OPENAI_API_KEY`.
+Configure a variável de ambiente `OPENAI_API_KEY`. O arquivo `.env.example` apresenta o nome da variável esperada, sem conter credenciais. Se preferir usar um arquivo `.env`, utilize uma ferramenta de carregamento de variáveis compatível; o Spring Boot não carrega esse arquivo automaticamente por padrão.
 
 No Windows PowerShell:
 
@@ -58,8 +58,10 @@ cd VoxIntelligenceAPI
 Execute os testes:
 
 ```bash
-mvn test
+mvn clean verify
 ```
+
+Os testes automatizados cobrem a validação de arquivos de áudio e os endpoints HTTP de interpretação por texto e áudio. Eles utilizam dublês para não realizar chamadas pagas ao provedor externo.
 
 Inicie a aplicação:
 
@@ -158,6 +160,7 @@ A aplicação não grava automaticamente uma movimentação nesta etapa. A confi
 - [x] Extração estruturada dos dados financeiros.
 - [x] Integração com transcrição de áudio.
 - [x] Endpoint para receber gravações e encaminhar o texto transcrito.
+- [x] Testes automatizados para validação de áudio e endpoints REST.
 - [ ] Implementar ferramentas para registrar e consultar movimentações.
 - [ ] Persistir movimentações em PostgreSQL.
 - [ ] Implementar confirmação e edição de movimentações.
