@@ -10,6 +10,7 @@ API REST para registrar movimentações financeiras a partir de descrições em 
 - Encaminhamento automático da transcrição para interpretação financeira.
 - Identificação de informações obrigatórias ausentes.
 - Preparação da movimentação para confirmação antes do registro.
+- Assistente conversacional com chamada de ferramentas para registrar e consultar movimentações e calcular o saldo.
 
 ## Tecnologias
 
@@ -131,6 +132,28 @@ curl -X POST http://localhost:8080/api/v1/transactions/interpret-audio \\
 
 O áudio é transcrito e o texto resultante passa pelo mesmo fluxo de interpretação utilizado pelo endpoint de texto.
 
+### 3. Conversar com o assistente financeiro
+
+`POST /api/v1/assistant/message`
+
+Requisição:
+
+```json
+{
+  "message": "Registre uma despesa de 42,50 reais com almoço hoje, na categoria FOOD."
+}
+```
+
+O assistente pode acionar ferramentas para:
+
+- Registrar uma receita ou despesa quando houver pedido explícito e os dados estiverem claros.
+- Listar movimentações, opcionalmente filtrando por receita ou despesa.
+- Calcular o total de receitas, despesas e o saldo líquido.
+
+Exemplo de consulta: `Qual é meu saldo atual?`.
+
+**Importante:** nesta etapa, as movimentações são mantidas somente em memória. Elas são perdidas quando a aplicação é reiniciada e não devem ser consideradas armazenamento financeiro permanente. A persistência em PostgreSQL será implementada em uma etapa posterior.
+
 ## Categorias iniciais
 
 - `FOOD`
@@ -161,7 +184,7 @@ A aplicação não grava automaticamente uma movimentação nesta etapa. A confi
 - [x] Integração com transcrição de áudio.
 - [x] Endpoint para receber gravações e encaminhar o texto transcrito.
 - [x] Testes automatizados para validação de áudio e endpoints REST.
-- [ ] Implementar ferramentas para registrar e consultar movimentações.
+- [x] Implementar ferramentas para registrar e consultar movimentações e calcular o saldo.
 - [ ] Persistir movimentações em PostgreSQL.
 - [ ] Implementar confirmação e edição de movimentações.
 - [ ] Criar limites e metas orçamentárias.
@@ -170,4 +193,4 @@ A aplicação não grava automaticamente uma movimentação nesta etapa. A confi
 
 ## Status
 
-Projeto em desenvolvimento. Nesta etapa, a API interpreta descrições textuais e gravações de áudio, retornando dados estruturados para conferência. A persistência financeira ainda não está habilitada.
+Projeto em desenvolvimento. Nesta etapa, a API interpreta descrições textuais e gravações de áudio, além de disponibilizar ferramentas conversacionais para registrar e consultar movimentações em memória. A persistência permanente ainda não está habilitada.
