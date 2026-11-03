@@ -157,6 +157,7 @@ A API oferece operações REST para criar, consultar, editar e excluir movimenta
 | Método | Rota | Descrição |
 |---|---|---|
 | `POST` | `/api/v1/transactions` | Cria uma movimentação confirmada |
+| `POST` | `/api/v1/transactions/confirm` | Confirma e persiste uma movimentação revisada |
 | `GET` | `/api/v1/transactions` | Lista movimentações |
 | `GET` | `/api/v1/transactions/{id}` | Consulta uma movimentação |
 | `PUT` | `/api/v1/transactions/{id}` | Atualiza uma movimentação |
@@ -198,7 +199,13 @@ Exemplo de criação:
 
 O resumo informa o total gasto naquela categoria no mês, o valor restante, o percentual utilizado e se o limite foi ultrapassado.
 
-### 5. Conversar com o assistente financeiro
+### 5. Relatório mensal
+
+`GET /api/v1/reports/monthly?year=2026&month=11`
+
+Retorna receitas, despesas, saldo líquido e a distribuição das despesas por categoria para o mês consultado.
+
+### 6. Conversar com o assistente financeiro
 
 `POST /api/v1/assistant/message`
 
@@ -221,6 +228,20 @@ O assistente pode acionar ferramentas para:
 Exemplo de consulta: `Qual é meu saldo atual?`.
 
 As movimentações e os limites são persistidos no PostgreSQL. As alterações de esquema são controladas pelo Flyway.
+
+### 7. Gerar resposta em áudio
+
+`POST /api/v1/assistant/speech`
+
+Requisição:
+
+```json
+{
+  "text": "Seu saldo deste mês é de 2.500 reais."
+}
+```
+
+A resposta é um arquivo MP3 (`audio/mpeg`). A síntese utiliza o modelo e a voz configurados em `application.yml` e gera consumo adicional no provedor.
 
 ## Categorias iniciais
 
@@ -257,9 +278,10 @@ A aplicação não grava automaticamente uma movimentação nesta etapa. A confi
 - [x] Disponibilizar operações REST de criação, consulta, edição e exclusão.
 - [x] Criar limites mensais por categoria.
 - [x] Calcular consumo, saldo restante e percentual do orçamento.
+- [x] Gerar relatórios mensais por categoria.
 - [x] Integrar ferramentas de orçamento ao assistente.
-- [ ] Adicionar respostas em áudio.
+- [x] Adicionar respostas em áudio (texto para fala).
 
 ## Status
 
-Projeto em desenvolvimento. A API interpreta texto e áudio, disponibiliza gerenciamento REST de movimentações, persiste dados em PostgreSQL e oferece ferramentas conversacionais para lançamentos, saldo e orçamento. O projeto ainda não possui autenticação multiusuário; a implantação atual deve ser tratada como ambiente de desenvolvimento/uso individual, não como serviço financeiro público.
+Projeto em desenvolvimento. A API interpreta texto e áudio, disponibiliza gerenciamento REST de movimentações, persiste dados em PostgreSQL e oferece ferramentas conversacionais para lançamentos, saldo e orçamento. **Limitação importante:** ainda não há autenticação, autorização ou isolamento de dados por usuário. Não exponha a API publicamente nem a utilize com dados financeiros de múltiplas pessoas até implementar essa camada. O projeto também requer configuração de chave e banco antes de executar todos os fluxos.
