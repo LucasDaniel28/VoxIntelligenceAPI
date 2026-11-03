@@ -1,5 +1,6 @@
 package com.voxintelligence.api.budget.service;
 
+import com.voxintelligence.api.audit.service.AuditService;
 import com.voxintelligence.api.budget.dto.*;
 import com.voxintelligence.api.budget.model.MonthlyBudget;
 import com.voxintelligence.api.budget.repository.MonthlyBudgetRepository;
@@ -20,48 +21,67 @@ import java.util.UUID;
 public class BudgetService {
     private final MonthlyBudgetRepository budgets;
     private final FinancialTransactionRepository transactions;
+    private final AuditService auditService;
 
-    public BudgetService(MonthlyBudgetRepository budgets, FinancialTransactionRepository transactions) {
-        this.budgets=budgets; this.transactions=transactions;
+    public BudgetService(MonthlyBudgetRepository budgets,
+                         FinancialTransactionRepository transactions,
+                         AuditService auditService) {
+        this.budgets = budgets;
+        this.transactions = transactions;
+        this.auditService = auditService;
     }
 
     @Transactional
     public BudgetSummaryResponse create(BudgetRequest request) {
-        if (budgets.findByCategoryAndYearAndMonth(request.category(), request.year(), request.month()).isPresent())
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Já existe um limite para essa categoria e período.");
-        MonthlyBudget saved=budgets.save(new MonthlyBudget(UUID.randomUUID(), request.category(),
+        if (budgets.findByCategoryAndYearAndMonth(request.category(), request.year(), request.month()).isPresent()) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "Já existe um limite para essa categoria e período.");
+        }
+
+        MonthlyBudget saved = budgets.save(new MonthlyBudget(UUID.randomUUID(), request.category(),
                 request.year(), request.month(), request.limitAmount()));
+        auditService.recordBudgetCreated(saved);
         return summarize(saved);
     }
 
-    @Transactional(readOnly=true)
+    @Transactional(readOnly = true)
     public List<BudgetSummaryResponse> list(int year, int month) {
-        return budgets.findByYearAndMonthOrderByCategory(year, month).stream().map(this::summarize).toList();
+        return budgets.findByYearAndMonthOrderByCategory(year, month).stream()
+                .map(this::summarize).toList();
     }
 
     @Transactional
     public BudgetSummaryResponse update(UUID id, BigDecimal amount) {
-        if (amount == null || amount.signum() <= 0 || amount.scale() > 2)
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "O limite deve ser positivo e ter no máximo duas casas decimais.");
-        MonthlyBudget budget=budgets.findById(id).orElseThrow(() ->
+        if (amount == null || amount.signum() <= 0 || amount.scale() > 2) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "O limite deve ser positivo e ter no máximo duas casas decimais.");
+        }
+
+        MonthlyBudget budget = budgets.findById(id).orElseThrow(() ->
                 new ResponseStatusException(HttpStatus.NOT_FOUND, "Limite não encontrado."));
+        MonthlyBudget before = new MonthlyBudget(budget.getId(), budget.getCategory(),
+                budget.getYear(), budget.getMonth(), budget.getLimitAmount());
+
         budget.update(amount);
+        auditService.recordBudgetUpdated(before, budget);
         return summarize(budget);
     }
 
     @Transactional
     public void delete(UUID id) {
-        budgets.delete(budgets.findById(id).orElseThrow(() ->
-                new ResponseStatusException(HttpStatus.NOT_FOUND, "Limite não encontrado.")));
+        MonthlyBudget budget = budgets.findById(id).orElseThrow(() ->
+                new ResponseStatusException(HttpStatus.NOT_FOUND, "Limite não encontrado."));
+        auditService.recordBudgetDeleted(budget);
+        budgets.delete(budget);
     }
 
     private BudgetSummaryResponse summarize(MonthlyBudget budget) {
-        LocalDate start=LocalDate.of(budget.getYear(), budget.getMonth(), 1);
-        LocalDate end=start.withDayOfMonth(start.lengthOfMonth());
-        BigDecimal spent=transactions.sumByTypeCategoryAndPeriod(
+        LocalDate start = LocalDate.of(budget.getYear(), budget.getMonth(), 1);
+        LocalDate end = start.withDayOfMonth(start.lengthOfMonth());
+        BigDecimal spent = transactions.sumByTypeCategoryAndPeriod(
                 TransactionType.EXPENSE, budget.getCategory(), start, end);
-        BigDecimal remaining=budget.getLimitAmount().subtract(spent);
-        BigDecimal percentage=spent.multiply(BigDecimal.valueOf(100))
+        BigDecimal remaining = budget.getLimitAmount().subtract(spent);
+        BigDecimal percentage = spent.multiply(BigDecimal.valueOf(100))
                 .divide(budget.getLimitAmount(), 2, RoundingMode.HALF_UP);
         return new BudgetSummaryResponse(budget.getId(), budget.getCategory(), budget.getYear(),
                 budget.getMonth(), budget.getLimitAmount(), spent, remaining, percentage,
