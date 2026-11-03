@@ -43,7 +43,7 @@ public class FinancialTransactionService {
     @Transactional
     public TransactionResponse update(UUID id, TransactionCreateRequest request) {
         FinancialTransaction transaction = getEntity(id);
-        transaction.update(request.amount(), request.description().trim(),
+        transaction.update(request.type(), request.amount(), request.description().trim(),
                 request.location(), request.category(), request.date());
         return TransactionResponse.from(transaction);
     }
