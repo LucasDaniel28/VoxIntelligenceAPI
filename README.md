@@ -104,13 +104,17 @@ curl http://localhost:8080/api/v1/transactions \\
 
 ## Auditoria
 
-As operações de criação, atualização e exclusão de movimentações financeiras geram eventos na tabela `audit_events`. Cada evento registra o identificador da movimentação, a ação, a data/hora e os dados anteriores e/ou posteriores em JSON.
+As operações de criação, atualização e exclusão de movimentações financeiras e orçamentos mensais geram eventos na tabela `audit_events`. Cada evento registra o tipo e identificador da entidade, a ação, a data/hora e os dados anteriores e/ou posteriores em JSON.
 
 Consulte o histórico de uma movimentação:
 
 `GET /api/v1/audit/transactions/{transactionId}`
 
-A resposta é ordenada do evento mais recente para o mais antigo. A auditoria é gravada na mesma transação de banco da operação financeira: se a operação principal falhar, o evento também não será persistido.
+Consulte o histórico de um orçamento:
+
+`GET /api/v1/audit/budgets/{budgetId}`
+
+As respostas são ordenadas do evento mais recente para o mais antigo. A auditoria é gravada na mesma transação de banco da operação financeira ou orçamentária: se a operação principal falhar, o evento também não será persistido.
 
 A migração `V3__create_audit_events.sql` cria a estrutura e os índices necessários.
 
