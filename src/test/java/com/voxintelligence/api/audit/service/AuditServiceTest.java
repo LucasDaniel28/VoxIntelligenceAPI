@@ -19,7 +19,7 @@ import static org.mockito.Mockito.*;
 class AuditServiceTest {
 
     private final AuditEventRepository repository = mock(AuditEventRepository.class);
-    private final AuditService service = new AuditService(repository, new ObjectMapper());
+    private final AuditService service = new AuditService(repository, new ObjectMapper().findAndRegisterModules());
 
     @Test
     void shouldRecordCreationWithAfterSnapshot() throws Exception {
@@ -32,7 +32,7 @@ class AuditServiceTest {
         assertEquals(transaction.getId(), event.getEntityId());
         assertEquals("CREATE", event.getAction());
         assertNull(event.getBeforeData());
-        assertEquals("45.90", new ObjectMapper().readTree(event.getAfterData()).get("amount").asText());
+        assertEquals("45.90", new ObjectMapper().findAndRegisterModules().readTree(event.getAfterData()).get("amount").asText());
         assertEquals("Almoço", new ObjectMapper().readTree(event.getAfterData()).get("description").asText());
         assertNotNull(event.getOccurredAt());
     }
