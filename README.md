@@ -18,6 +18,7 @@ API REST para registrar movimentações financeiras a partir de descrições em 
 - Spring Boot 3.5.11
 - Spring Web
 - Spring Validation
+- Spring AI (ChatClient, Tool Calling, transcrição e síntese de áudio)
 - Maven
 - Spring Data JPA
 - PostgreSQL 16
@@ -262,7 +263,7 @@ A resposta é um arquivo MP3 (`audio/mpeg`). A síntese utiliza o modelo e a voz
 - `READY_FOR_CONFIRMATION`: tipo e valor foram identificados; a movimentação está preparada para conferência.
 - `NEEDS_INFORMATION`: faltam dados obrigatórios, informados em `missingFields`.
 
-A aplicação não grava automaticamente uma movimentação nesta etapa. A confirmação e a persistência serão implementadas nas próximas entregas.
+A interpretação não grava automaticamente. Após revisar os dados extraídos, envie-os para `POST /api/v1/transactions/confirm` para persistir a movimentação.
 
 ## Roadmap
 
