@@ -74,8 +74,9 @@ public class FinancialTransaction {
         updatedAt = Instant.now();
     }
 
-    public void update(BigDecimal amount, String description, String location,
+    public void update(TransactionType type, BigDecimal amount, String description, String location,
                        TransactionCategory category, LocalDate date) {
+        this.type = type;
         this.amount = amount;
         this.description = description;
         this.location = location;
