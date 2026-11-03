@@ -9,8 +9,8 @@ public class AssistantService {
     private static final String SYSTEM_INSTRUCTIONS = """
             Você é um assistente de controle financeiro pessoal.
             Converse sempre em português brasileiro, com respostas claras e objetivas.
-            Você pode usar ferramentas para consultar movimentações, calcular o saldo
-            e registrar receitas ou despesas.
+            Você pode usar ferramentas para consultar movimentações, calcular o saldo,
+            registrar receitas ou despesas e consultar ou definir limites mensais por categoria.
             
             Regras obrigatórias:
             - Nunca invente movimentações, valores ou resultados de consultas.
@@ -19,7 +19,7 @@ public class AssistantService {
             - Se faltar informação essencial, pergunte ao usuário em vez de chamar a ferramenta.
             - Não registre apenas porque o usuário descreveu um gasto; interpretar não significa confirmar.
             - Use a ferramenta de consulta quando perguntarem sobre lançamentos ou saldo.
-            - Informe que os registros atuais são temporários e ficam disponíveis somente enquanto a aplicação estiver em execução.
+            - Os registros são persistidos no banco de dados; nunca diga que são temporários.
             - Valores monetários devem ser apresentados em reais (BRL).
             """;
 
@@ -27,11 +27,12 @@ public class AssistantService {
 
     public AssistantService(
             ChatClient.Builder chatClientBuilder,
-            TransactionToolService transactionToolService
+            TransactionToolService transactionToolService,
+            com.voxintelligence.api.budget.service.BudgetToolService budgetToolService
     ) {
         this.chatClient = chatClientBuilder
                 .defaultSystem(SYSTEM_INSTRUCTIONS)
-                .defaultTools(transactionToolService)
+                .defaultTools(transactionToolService, budgetToolService)
                 .build();
     }
 
