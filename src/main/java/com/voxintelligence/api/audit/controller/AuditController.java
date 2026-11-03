@@ -22,4 +22,10 @@ public class AuditController {
         return repository.findByEntityTypeAndEntityIdOrderByOccurredAtDesc(
                 "FINANCIAL_TRANSACTION", transactionId);
     }
+
+    @GetMapping("/budgets/{budgetId}")
+    public List<AuditEvent> findBudgetHistory(@PathVariable UUID budgetId) {
+        return repository.findByEntityTypeAndEntityIdOrderByOccurredAtDesc(
+                "MONTHLY_BUDGET", budgetId);
+    }
 }
