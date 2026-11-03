@@ -39,6 +39,7 @@ class AssistantControllerTest {
     @Test
     void shouldRejectBlankMessage() throws Exception {
         mockMvc.perform(post("/api/v1/assistant/message")
+                        .header("X-API-KEY", "test-api-key")
                         .contentType(APPLICATION_JSON)
                         .content("""
                                 {"message":" "}
