@@ -24,7 +24,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(TransactionController.class)
+@WebMvcTest(value = TransactionController.class, properties = "app.security.api-key=test-api-key")
 class TransactionControllerTest {
 
     @Autowired
@@ -41,7 +41,7 @@ class TransactionControllerTest {
         when(interpretationService.interpret("Gastei 50 reais no mercado"))
                 .thenReturn(sampleResponse());
 
-        mockMvc.perform(post("/api/v1/transactions/interpret")
+        mockMvc.perform(post("/api/v1/transactions/interpret").header("X-API-KEY", "test-api-key")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"text":"Gastei 50 reais no mercado"}
@@ -73,7 +73,8 @@ class TransactionControllerTest {
         when(interpretationService.interpret("Gastei 50 reais no mercado"))
                 .thenReturn(sampleResponse());
 
-        mockMvc.perform(multipart("/api/v1/transactions/interpret-audio").file(audio))
+        mockMvc.perform(multipart("/api/v1/transactions/interpret-audio").file(audio)
+                        .header("X-API-KEY", "test-api-key"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.type").value("EXPENSE"))
                 .andExpect(jsonPath("$.amount").value(50.00))
