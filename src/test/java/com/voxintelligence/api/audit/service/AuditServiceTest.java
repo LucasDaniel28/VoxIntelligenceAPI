@@ -1,5 +1,6 @@
 package com.voxintelligence.api.audit.service;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.voxintelligence.api.audit.model.AuditEvent;
 import com.voxintelligence.api.audit.repository.AuditEventRepository;
@@ -19,7 +20,8 @@ import static org.mockito.Mockito.*;
 class AuditServiceTest {
 
     private final AuditEventRepository repository = mock(AuditEventRepository.class);
-    private final AuditService service = new AuditService(repository, new ObjectMapper().findAndRegisterModules());
+    private final ObjectMapper objectMapper = new ObjectMapper().findAndRegisterModules();
+    private final AuditService service = new AuditService(repository, objectMapper);
 
     @Test
     void shouldRecordCreationWithAfterSnapshot() throws Exception {
@@ -32,8 +34,9 @@ class AuditServiceTest {
         assertEquals(transaction.getId(), event.getEntityId());
         assertEquals("CREATE", event.getAction());
         assertNull(event.getBeforeData());
-        assertEquals("45.90", new ObjectMapper().findAndRegisterModules().readTree(event.getAfterData()).get("amount").asText());
-        assertEquals("Almoço", new ObjectMapper().readTree(event.getAfterData()).get("description").asText());
+        JsonNode after = objectMapper.readTree(event.getAfterData());
+        assertAmountEquals("45.90", after);
+        assertEquals("Almoço", after.get("description").asText());
         assertNotNull(event.getOccurredAt());
     }
 
@@ -46,8 +49,8 @@ class AuditServiceTest {
 
         AuditEvent event = capturedEvent();
         assertEquals("UPDATE", event.getAction());
-        assertEquals("45.90", new ObjectMapper().readTree(event.getBeforeData()).get("amount").asText());
-        assertEquals("55.00", new ObjectMapper().readTree(event.getAfterData()).get("amount").asText());
+        assertAmountEquals("45.90", objectMapper.readTree(event.getBeforeData()));
+        assertAmountEquals("55.00", objectMapper.readTree(event.getAfterData()));
     }
 
     @Test
@@ -60,6 +63,10 @@ class AuditServiceTest {
         assertEquals("DELETE", event.getAction());
         assertNotNull(event.getBeforeData());
         assertNull(event.getAfterData());
+    }
+
+    private void assertAmountEquals(String expected, JsonNode snapshot) {
+        assertEquals(0, new BigDecimal(expected).compareTo(snapshot.get("amount").decimalValue()));
     }
 
     private AuditEvent capturedEvent() {
