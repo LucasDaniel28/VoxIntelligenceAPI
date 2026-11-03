@@ -65,6 +65,46 @@ class AuditServiceTest {
         assertNull(event.getAfterData());
     }
 
+
+    @Test
+    void shouldRecordBudgetCreationSnapshot() throws Exception {
+        var budget = budget(new BigDecimal("800.00"));
+        service.recordBudgetCreated(budget);
+
+        AuditEvent event = capturedEvent();
+        assertEquals("MONTHLY_BUDGET", event.getEntityType());
+        assertEquals(budget.getId(), event.getEntityId());
+        assertEquals("CREATE", event.getAction());
+        assertNull(event.getBeforeData());
+        JsonNode after = objectMapper.readTree(event.getAfterData());
+        assertEquals("FOOD", after.get("category").asText());
+        assertAmountEquals("800.00", after, "limitAmount");
+    }
+
+    @Test
+    void shouldRecordBudgetUpdateSnapshots() throws Exception {
+        var before = budget(new BigDecimal("800.00"));
+        var after = budgetWithId(before.getId(), new BigDecimal("950.00"));
+        service.recordBudgetUpdated(before, after);
+
+        AuditEvent event = capturedEvent();
+        assertEquals("UPDATE", event.getAction());
+        assertAmountEquals("800.00", objectMapper.readTree(event.getBeforeData()), "limitAmount");
+        assertAmountEquals("950.00", objectMapper.readTree(event.getAfterData()), "limitAmount");
+    }
+
+    @Test
+    void shouldRecordBudgetDeletionSnapshot() {
+        var budget = budget(new BigDecimal("800.00"));
+        service.recordBudgetDeleted(budget);
+
+        AuditEvent event = capturedEvent();
+        assertEquals("MONTHLY_BUDGET", event.getEntityType());
+        assertEquals("DELETE", event.getAction());
+        assertNotNull(event.getBeforeData());
+        assertNull(event.getAfterData());
+    }
+
     private void assertAmountEquals(String expected, JsonNode snapshot) {
         assertEquals(0, new BigDecimal(expected).compareTo(snapshot.get("amount").decimalValue()));
     }
