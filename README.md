@@ -169,6 +169,7 @@ Exemplo com cURL:
 
 ```bash
 curl -X POST http://localhost:8080/api/v1/transactions/interpret-audio \\
+  -H "X-API-KEY: sua-chave-de-acesso" \\
   -F "file=@./gasto.wav"
 ```
 
