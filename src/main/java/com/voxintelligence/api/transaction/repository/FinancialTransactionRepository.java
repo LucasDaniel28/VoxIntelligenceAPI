@@ -28,7 +28,13 @@ public interface FinancialTransactionRepository extends JpaRepository<FinancialT
                                   @Param("start") LocalDate start,
                                   @Param("end") LocalDate end);
 
-    List<FinancialTransaction> findByCategoryAndDateBetween(
-            com.voxintelligence.api.transaction.model.TransactionCategory category,
-            LocalDate start, LocalDate end);
+    @Query("""
+            select coalesce(sum(t.amount), 0) from FinancialTransaction t
+            where t.type = :type and t.category = :category and t.date between :start and :end
+            """)
+    BigDecimal sumByTypeCategoryAndPeriod(
+            @Param("type") TransactionType type,
+            @Param("category") com.voxintelligence.api.transaction.model.TransactionCategory category,
+            @Param("start") LocalDate start,
+            @Param("end") LocalDate end);
 }
