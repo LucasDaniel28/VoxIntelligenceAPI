@@ -25,6 +25,12 @@ public class FinancialTransactionController {
         return service.create(request);
     }
 
+    @PostMapping("/confirm")
+    @ResponseStatus(HttpStatus.CREATED)
+    public TransactionResponse confirm(@Valid @RequestBody TransactionCreateRequest request) {
+        return service.create(request);
+    }
+
     @GetMapping
     public List<TransactionResponse> findAll() {
         return service.findAll();
