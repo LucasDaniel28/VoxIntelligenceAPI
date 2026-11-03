@@ -45,3 +45,5 @@ server:
 
 app:
   time-zone: America/Sao_Paulo
+  security:
+    api-key: ${API_ACCESS_KEY:}
