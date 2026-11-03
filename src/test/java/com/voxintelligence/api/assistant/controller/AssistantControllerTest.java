@@ -13,7 +13,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(AssistantController.class)
+@WebMvcTest(value = AssistantController.class, properties = "app.security.api-key=test-api-key")
 class AssistantControllerTest {
 
     @Autowired
@@ -27,7 +27,7 @@ class AssistantControllerTest {
         when(assistantService.chat("Qual é meu saldo?"))
                 .thenReturn("Seu saldo atual é R$ 0,00.");
 
-        mockMvc.perform(post("/api/v1/assistant/message")
+        mockMvc.perform(post("/api/v1/assistant/message").header("X-API-KEY", "test-api-key")
                         .contentType(APPLICATION_JSON)
                         .content("""
                                 {"message":"Qual é meu saldo?"}
