@@ -36,19 +36,25 @@ API REST para registrar movimentações financeiras a partir de descrições em 
 
 A chave de acesso não deve ser inserida diretamente nos arquivos do projeto.
 
-Configure a variável de ambiente `OPENAI_API_KEY`. O arquivo `.env.example` apresenta o nome da variável esperada, sem conter credenciais. Se preferir usar um arquivo `.env`, utilize uma ferramenta de carregamento de variáveis compatível; o Spring Boot não carrega esse arquivo automaticamente por padrão.
+Configure as variáveis `OPENAI_API_KEY` e `API_ACCESS_KEY`. A primeira é usada pelo provedor de processamento de linguagem e áudio; a segunda é uma chave privada definida por você para proteger todos os endpoints HTTP da aplicação. Não reutilize a chave do provedor como chave de acesso da API.
+
+O arquivo `.env.example` apresenta os nomes das variáveis, sem conter credenciais. Se preferir usar um arquivo `.env`, utilize uma ferramenta de carregamento de variáveis compatível; o Spring Boot não carrega esse arquivo automaticamente por padrão.
 
 No Windows PowerShell:
 
 ```powershell
-$env:OPENAI_API_KEY="sua-chave"
+$env:OPENAI_API_KEY="sua-chave-do-provedor"
+$env:API_ACCESS_KEY="crie-uma-chave-longa-e-aleatoria"
 ```
 
 No Linux ou macOS:
 
 ```bash
-export OPENAI_API_KEY="sua-chave"
+export OPENAI_API_KEY="sua-chave-do-provedor"
+export API_ACCESS_KEY="crie-uma-chave-longa-e-aleatoria"
 ```
+
+Todas as requisições à API devem enviar o cabeçalho `X-API-KEY` com o valor de `API_ACCESS_KEY`. Sem a variável configurada, a aplicação responde `503 Service Unavailable`; com uma chave ausente ou incorreta, responde `401 Unauthorized`. Os testes unitários validam esses cenários. Não publique a chave no GitHub, em capturas de tela ou no código-fonte.
 
 O modelo de texto e o serviço de transcrição estão configurados em `src/main/resources/application.yml`. Os nomes dos modelos podem ser alterados nessa configuração.
 
@@ -89,7 +95,12 @@ docker compose down
 
 Os dados permanecem no volume `vox_postgres_data`. Para apagar também os dados locais, use `docker compose down -v`.
 
-A aplicação ficará disponível em `http://localhost:8080`.
+A aplicação ficará disponível em `http://localhost:8080`. Inclua o cabeçalho `X-API-KEY` nas chamadas protegidas. Exemplo:
+
+```bash
+curl http://localhost:8080/api/v1/transactions \\
+  -H "X-API-KEY: sua-chave-de-acesso"
+```
 
 ## Endpoints
 
@@ -285,4 +296,4 @@ A interpretação não grava automaticamente. Após revisar os dados extraídos,
 
 ## Status
 
-Projeto em desenvolvimento. A API interpreta texto e áudio, disponibiliza gerenciamento REST de movimentações, persiste dados em PostgreSQL e oferece ferramentas conversacionais para lançamentos, saldo e orçamento. **Limitação importante:** ainda não há autenticação, autorização ou isolamento de dados por usuário. Não exponha a API publicamente nem a utilize com dados financeiros de múltiplas pessoas até implementar essa camada. O projeto também requer configuração de chave e banco antes de executar todos os fluxos.
+Projeto em desenvolvimento e planejado para uso individual. Não há cadastro nem gerenciamento de usuários. O acesso aos endpoints é protegido por uma chave única (`API_ACCESS_KEY`), enviada no cabeçalho `X-API-KEY`. A chave protege o acesso à API, mas não substitui HTTPS, proteção de rede ou boas práticas de operação. O projeto também requer configuração das credenciais e do banco antes de executar todos os fluxos.
